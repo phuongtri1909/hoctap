@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .home-button-link {
+            text-decoration: none;
+        }
+
+        .home-button {
+            position: fixed;
+            top: 5px;
+            left: 5px;
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .home-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="{{ url_for('home') }}" class="home-button-link">
+        <button class="home-button">Trang Chủ</button>
+    </a>
+</body>
+
+</html>

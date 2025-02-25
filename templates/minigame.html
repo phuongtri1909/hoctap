@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minigame Nối Từ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #007bff;
+        }
+
+        #game-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+
+        input {
+            padding: 10px;
+            width: 80%;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        #word-list {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    {% include "base.html" %}
+    <h1>Minigame Nối Từ</h1>
+    <p id="closed-message" class="error hidden">
+        Hẹn gặp bạn vào ngày sau nhé, hôm nay minigame không mở mất rồi.
+    </p>
+
+    <div id="game-container" class="hidden">
+        <p><strong>Bắt đầu với từ:</strong> <span id="current-word">hoa</span></p>
+        <input type="text" id="user-input" placeholder="Nhập từ nối...">
+        <button onclick="playGame()">Gửi</button>
+        <p id="message" class="error"></p>
+        <div id="word-list"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("/minigame/config", {
+                method: "GET",
+                headers: { "Content-Type": "application/json" }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const openDays = data.open_days;
+                    const checkboxes = document.querySelectorAll(".days-list input[type='checkbox']");
+                    const today = new Date().getDay();
+                    const gameContainer = document.getElementById("game-container");
+                    const closedMessage = document.getElementById("closed-message");
+                    console.log(openDays);
+
+                    if (openDays.includes(today)) {
+                        gameContainer.classList.remove("hidden");
+                    } else {
+                        closedMessage.classList.remove("hidden");
+                    }
+                    checkboxes.forEach(checkbox => {
+                        const day = parseInt(checkbox.value);
+                        checkbox.checked = openDays.includes(day);
+                    });
+                })
+                .catch(error => {
+                    console.error("Lỗi tải cấu hình ngày mở:", error);
+                });
+        });
+
+
+        const wordBank = [
+            "bánh mì", "cây xanh", "nước lọc", "học tập", "yêu thương", "đèn pin", "mèo con", "chạy bộ", "trái tim", "mưa rào",
+            "xe máy", "đường phố", "bút bi", "sách vở", "cá vàng", "hoa hồng", "màu sắc", "gió lạnh", "bầu trời", "bức tường", "quạt máy",
+            "giày thể thao", "chó cỏ", "nhà cửa", "biển cả", "núi rừng", "nhạc cụ", "chợ búa", "bàn ghế", "đèn lồng", "đá quý",
+            "vàng bạc", "bạc hà", "công viên", "trường học", "thầy cô", "học sinh", "bạn bè", "gia đình", "mẹ hiền", "bố mẹ",
+            "anh chị", "em út", "con cái", "ông bà", "trái đất", "mặt trăng", "ngôi sao", "tình yêu", "cảm xúc", "vui vẻ",
+            "buồn bã", "tức giận", "hạnh phúc", "thức ăn", "cơm trắng", "bún bò", "phở gà", "hủ tiếu", "nước cam", "cà phê",
+            "trà xanh", "sữa tươi", "bánh ngọt", "kẹo dẻo", "đậu phộng", "thịt heo", "cá chép", "chim sẻ", "lá chuối", "đồi núi",
+            "sông suối", "cầu treo", "chanh dây", "dưa hấu", "đào tiên", "mít thái", "nhãn lồng", "quýt ngọt", "táo tàu", "lê trắng"
+        ];
+
+        let currentWord = "hoa";
+        let usedWords = ["hoa"];
+
+        function playGame() {
+            const inputField = document.getElementById("user-input");
+            const messageEl = document.getElementById("message");
+            const wordList = document.getElementById("word-list");
+
+            const userWord = inputField.value.trim().toLowerCase();
+
+            if (!userWord) {
+                messageEl.textContent = "Vui lòng nhập một từ!";
+                return;
+            }
+
+            if (!wordBank.includes(userWord)) {
+                messageEl.textContent = "Từ này không có trong danh sách!";
+                return;
+            }
+
+            if (usedWords.includes(userWord)) {
+                messageEl.textContent = "Từ này đã được sử dụng!";
+                return;
+            }
+
+            let lastSyllable = currentWord.trim().split(" ").pop().toLowerCase();
+            let firstSyllable = userWord.trim().split(" ")[0].toLowerCase();
+
+            if (firstSyllable !== lastSyllable) {
+                messageEl.textContent = `Sai! Từ mới phải bắt đầu bằng "${lastSyllable}".`;
+                return;
+            }
+
+            usedWords.push(userWord);
+            currentWord = userWord;
+            document.getElementById("current-word").textContent = currentWord;
+
+            const newWordEl = document.createElement("p");
+            newWordEl.textContent = userWord;
+            wordList.appendChild(newWordEl);
+
+            messageEl.textContent = "";
+            inputField.value = "";
+        }
+
+    </script>
+</body>
+
+</html>

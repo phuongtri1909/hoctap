@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Bài Viết Diễn Đàn</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .btn { padding: 5px 10px; cursor: pointer; border: none; color: white; }
+        .btn-delete { background-color: red; }
+        .btn-edit { background-color: orange; }
+    </style>
+</head>
+<body>
+    <h1>Quản lý Bài Viết Diễn Đàn</h1>
+    <button onclick="loadPosts()">Tải danh sách bài viết</button>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tiêu đề</th>
+                <th>Tác giả</th>
+                <th>Danh mục</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody id="post-list"></tbody>
+    </table>
+    
+    <script>
+        async function loadPosts() {
+            const response = await fetch("/forum/posts");
+            const posts = await response.json();
+            const tableBody = document.getElementById("post-list");
+            tableBody.innerHTML = "";
+            posts.forEach(post => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${post._id}</td>
+                        <td>${post.title}</td>
+                        <td>${post.author}</td>
+                        <td>${post.category}</td>
+                        <td>
+                            <button class='btn btn-edit' onclick="editPost('${post._id}')">Sửa</button>
+                            <button class='btn btn-delete' onclick="deletePost('${post._id}')">Xóa</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function deletePost(id) {
+            if (confirm("Bạn có chắc muốn xóa bài viết này?")) {
+                await fetch(`/forum/posts/${id}`, { method: "DELETE" });
+                loadPosts();
+            }
+        }
+    </script>
+</body>
+</html>

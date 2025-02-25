@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diễn đàn & Chatbox</title>
+    <style>
+        /* Tổng quan */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+            margin: 0;
+        }
+
+        /* Khu vực chính */
+        #forum {
+            max-width: 650px;
+            margin: auto;
+        }
+
+        /* Form đăng bài & Chatbox */
+        #post-form,
+        #chatbox {
+            background: white;
+            padding: 18px;
+            margin-bottom: 20px;
+            border-radius: 14px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        #post-form:hover,
+        #chatbox:hover {
+            transform: scale(1.02);
+        }
+
+        /* Ô nhập dữ liệu */
+        #post-form input,
+        #post-form textarea,
+        #chatbox input {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 16px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+        }
+
+        #post-form input:focus,
+        #post-form textarea:focus,
+        #chatbox input:focus {
+            border-color: #0056b3;
+            background: #fff;
+            outline: none;
+            box-shadow: 0px 0px 6px rgba(0, 91, 187, 0.5);
+        }
+
+        /* Nút hành động */
+        #post-form button,
+        #chatbox button {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        #post-form button:hover,
+        #chatbox button:hover {
+            background: linear-gradient(135deg, #0056b3, #00409a);
+            transform: scale(1.05);
+        }
+
+        /* Bài đăng & Tin nhắn */
+        .post-card,
+        .chat-message {
+            background: white;
+            padding: 18px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        .post-card:hover,
+        .chat-message:hover {
+            transform: scale(1.02);
+        }
+
+        /* Phần bình luận */
+        .comment-section {
+            margin-top: 12px;
+            padding-left: 12px;
+            border-left: 3px solid #ddd;
+        }
+
+        .comment {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        /* Nút bật/tắt Chatbox */
+        #toggle-chatbox {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.25);
+            border: none;
+            transition: all 0.3s;
+        }
+
+        #toggle-chatbox:hover {
+            background: linear-gradient(135deg, #0056b3, #00409a);
+            transform: scale(1.1);
+        }
+
+        .chat-container {
+            display: none;
+            /* Ẩn mặc định */
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            height: 400px;
+            background: white;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 5px;
+        }
+
+        .chat-input button {
+            padding: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .user-message {
+            background: #e6e6e6;
+            align-self: flex-start;
+        }
+
+        .bot-message {
+            background: #d1bfa1;
+            align-self: flex-end;
+        }
+
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #ddd;
+            padding: 10px;
+            background: white;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: #f1f1f1;
+        }
+
+        .chat-input button {
+            background: #d1bfa1;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        /* Hiệu ứng hover & animation */
+        button {
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 600px) {
+            #forum {
+                width: 100%;
+                padding: 12px;
+            }
+
+            #chat-container {
+                width: 92%;
+                right: 4%;
+            }
+
+            #toggle-chatbox {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+
+<body>
+    {% include "base.html" %}
+    <section id="forum">
+        <h2>Diễn đàn thảo luận</h2>
+
+        <div id="post-form">
+            <div class="post-header">
+                <input type="text" id="post-title" placeholder="Hoàng ơi, bạn đang nghĩ gì thế?">
+            </div>
+            <textarea id="post-content" placeholder="Nhập nội dung bài viết..."></textarea>
+
+            <button class="post-submit" onclick="createPost()">📝 Đăng bài</button>
+        </div>
+
+        <div id="post-container"></div>
+    </section>
+    <button id="toggle-chatbox" onclick="toggleChatbox()">📢</button>
+
+    <div id="chat-container" class="chat-container" style="display: none;">
+        <div class="chat-header">box chat</div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot-message">Hello! What are your plans for the holiday this year?</div>
+            <div class="message user-message">I don't know yet. Last year I went to Spain. It is a beautiful country.
+            </div>
+            <div class="message bot-message">I have heard a lot about Spain. In Great Britain we have very many
+                wonderful holiday places too. Have you ever been to Brighton?</div>
+            <div class="message user-message">I have never been there.</div>
+            <div class="message bot-message">It's a lovely place where I like to spend my holidays.</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chat-input" placeholder="Enter your message...">
+            <button onclick="sendMessage()">📩</button>
+        </div>
+    </div>
+
+
+    <script>
+        const username = localStorage.getItem("username") || "Bạn";
+
+        document.getElementById("post-title").placeholder = `${username} ơi, bạn đang nghĩ gì thế?`;
+        async function fetchPosts() {
+            try {
+                const response = await fetch("/forum/posts");
+                if (!response.ok) throw new Error("Lỗi khi lấy bài viết");
+                const posts = await response.json();
+                displayPosts(posts);
+            } catch (error) {
+                console.error("Lỗi:", error);
+            }
+        }
+
+        function displayPosts(posts) {
+            const postContainer = document.getElementById("post-container");
+            postContainer.innerHTML = "";
+
+            posts.forEach(post => {
+                const postCard = document.createElement("div");
+                postCard.classList.add("post-card");
+
+                postCard.innerHTML = `
+            <div class="post-header">
+                <h3>${post.title}</h3>
+            </div>
+
+            <div class="post-content">
+                <p>${post.content}</p>
+            </div>
+
+            <div class="post-footer">
+                <div class="post-actions">
+                    <button class="like-btn" onclick="likePost('${post._id}')">
+                        ❤️ <span id="like-count-${post._id}">${post.likes || 0}</span>
+                    </button>
+                    <button class="comment-btn" onclick="toggleCommentSection('${post._id}')">
+                        💬 Bình luận
+                    </button>
+                </div>
+            </div>
+
+            <div class="comment-section" id="comments-${post._id}" style="display: none;">
+                <input type="text" class="comment-input" id="comment-input-${post._id}" 
+                    placeholder="Viết bình luận..." onkeypress="handleCommentKeypress(event, '${post._id}')">
+                <button class="comment-submit" onclick="addComment('${post._id}')">
+                    Gửi
+                </button>
+                <div id="comment-list-${post._id}" class="comment-list"></div>
+            </div>
+        `;
+
+                postContainer.appendChild(postCard);
+                fetchComments(post._id);
+            });
+        }
+
+        // Toggle phần bình luận
+        function toggleCommentSection(postId) {
+            const commentSection = document.getElementById(`comments-${postId}`);
+            commentSection.style.display = (commentSection.style.display === "none") ? "block" : "none";
+        }
+
+
+    function displayComments(postId, comments) {
+        const commentList = document.getElementById(`comment-list-${postId}`);
+        commentList.innerHTML = comments.map(comment => 
+            `<div class="comment">${comment.author}: ${comment.content} 
+                <button onclick="deleteComment('${comment._id}', '${postId}')">🗑️</button>
+            </div>`
+        ).join("");
+    }
+
+    async function addComment(postId) {
+        const commentText = document.getElementById(`comment-input-${postId}`).value;
+        if (!commentText) return alert("Vui lòng nhập nội dung bình luận!");
+
+        await fetch(`/forum/comments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ post_id: postId, author: "hocvien2", content: commentText })
+        });
+
+        fetchComments(postId);
+    }
+
+    async function createPost() {
+        const title = document.getElementById("post-title").value;
+        const content = document.getElementById("post-content").value;
+        if (!title || !content) return alert("Nhập đầy đủ tiêu đề và nội dung!");
+
+        await fetch("/forum/posts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, content, author: "hocvien2", category: "general" })
+        });
+
+        fetchPosts();
+    }
+
+    function toggleChatbox() {
+        const chatContainer = document.getElementById("chat-container");
+        const chatButton = document.getElementById("toggle-chatbox");
+
+        if (chatContainer.style.display === "none" || chatContainer.style.display === "") {
+            chatContainer.style.display = "flex"; // Hiển thị chatbox
+            chatButton.textContent = "❌"; // Đổi icon thành dấu đóng
+        } else {
+            chatContainer.style.display = "none"; // Ẩn chatbox
+            chatButton.textContent = "📢"; // Đổi icon thành loa
+        }
+    }
+
+
+
+    function sendMessage() {
+            const input = document.getElementById("chat-input");
+            const message = input.value.trim();
+            if (message) {
+                const chatBox = document.getElementById("chat-messages");
+                const userMessage = document.createElement("div");
+                userMessage.className = "message user-message";
+                userMessage.textContent = message;
+                chatBox.appendChild(userMessage);
+                input.value = "";
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+            }
+        }
+
+        async function likePost(postId) {
+            try {
+                const response = await fetch(`/forum/posts/${postId}/like`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+
+                if (!response.ok) throw new Error("Lỗi khi like bài viết");
+
+                const data = await response.json();
+                document.getElementById(`like-count-${postId}`).textContent = data.likes;
+            } catch (error) {
+                console.error("Lỗi:", error);
+            }
+        }
+
+        async function fetchComments(postId) {
+            try {
+                const response = await fetch(`/forum/comments/${postId}`);
+                if (!response.ok) throw new Error("Lỗi khi lấy bình luận");
+                const comments = await response.json();
+                displayComments(postId, comments);
+            } catch (error) {
+                console.error("Lỗi:", error);
+            }
+        }
+
+        function displayComments(postId, comments) {
+            const commentList = document.getElementById(`comment-list-${postId}`);
+            commentList.innerHTML = comments.map(comment =>
+                `<div class="comment">${comment.author}: ${comment.content} 
+                <button onclick="deleteComment('${comment._id}', '${postId}')">🗑️</button>
+            </div>`
+            ).join("");
+        }
+
+        async function addComment(postId) {
+            const commentText = document.getElementById(`comment-input-${postId}`).value;
+            if (!commentText) return alert("Vui lòng nhập nội dung bình luận!");
+
+            await fetch(`/forum/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ post_id: postId, author: "ductrungbunnt", content: commentText })
+            });
+
+            fetchComments(postId);
+        }
+
+        async function createPost() {
+            const title = document.getElementById("post-title").value;
+            const content = document.getElementById("post-content").value;
+            if (!title || !content) return alert("Nhập đầy đủ tiêu đề và nội dung!");
+
+            await fetch("/forum/posts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, content, author: "hocvien2hocvien2", category: "general" })
+            });
+
+            fetchPosts();
+        }
+        
+        function displayMessage(msg) {
+            const messageBox = document.getElementById("chat-messages");
+            const messageTime = new Date(msg.timestamp);
+            const formattedTime = timeAgo(messageTime);
+        
+            let messageHTML = `<div class="message" id=${msg.message_id}>
+                <strong>${msg.user}:</strong> ${msg.message} <small>(${formattedTime})</small>`;
+        
+            // Show delete button if the user is an admin
+            if (role === "admin") {
+                messageHTML += ` <button class="delete-btn" id=${msg.message_id} onclick="deleteMessage('${msg.message_id}')">🗑</button>`;
+            }
+        
+            messageHTML += `</div>`;
+        
+            // Append new messages to chat
+            messageBox.innerHTML += messageHTML;
+        }
+        
+
+        async function loadMessages() {
+            let response = await fetch("/messages");
+            let messages = await response.json();
+
+            let chatBox = document.getElementById("chat-messages");
+            chatBox.innerHTML = "";
+
+            messages.forEach(msg => {
+                displayMessage(msg);
+                
+            });
+        }
+
+        function deleteMessage(messageId) {
+            if (role !== "admin") {
+                alert("Chỉ quản trị viên mới có thể xóa tin nhắn!");
+                return;
+            }
+        
+            console.log("Xóa tin nhắn:", { token, message_id: messageId });
+        
+            // Send DELETE request to the backend API
+            fetch(`/messages/${messageId}`, {
+                method: "DELETE",
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === "Message deleted successfully") {
+                    alert("Tin nhắn đã được xóa thành công!");
+                    // Optionally, remove the message from the UI
+                    const messageElement = document.querySelector(`.message[id="${messageId}"]`);
+                    if (messageElement) {
+                        messageElement.remove();  // Remove the message element from the DOM
+                    }
+                } else {
+                    alert(data.message || "Có lỗi xảy ra khi xóa tin nhắn.");
+                }
+            })
+            .catch(error => {
+                console.error("Lỗi khi xóa tin nhắn:", error);
+                alert("Đã xảy ra lỗi khi xóa tin nhắn.");
+            });
+        }
+        
+        
+        const socket = io(`${window.location.protocol}//${window.location.hostname}:${window.location.port}`);
+
+        const user = localStorage.getItem("username") || "Khách";;
+        const role = localStorage.getItem("role") || "user";
+        const token = localStorage.getItem("token") || "";
+        const room = "general";
+
+        socket.emit("join", { user, room });
+
+        socket.on("new_message", (msg) => {
+            const messageTime = new Date(msg.timestamp);
+            const formattedTime = timeAgo(messageTime);
+            const messageBox = document.getElementById("chat-messages");
+            messageBox.innerHTML += `<div class="message"><strong>${msg.user}:</strong> ${msg.message} <small>(${formattedTime})</small></div>`;
+        });
+
+        function sendMessage() {
+            const input = document.getElementById("chat-input");
+            if (!input.value.trim()) return;
+            const timestamp = new Date().toISOString();
+            socket.emit("send_message", { user, message: input.value, room, timestamp });
+            input.value = "";
+        }
+
+
+        // Hàm tính thời gian hiển thị
+        function timeAgo(date) {
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+
+            if (seconds < 10) return "Vừa xong";
+            if (seconds < 60) return `${seconds} giây trước`;
+
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} phút trước`;
+
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} giờ trước`;
+
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days} ngày trước`;
+
+            const options = {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            };
+            return date.toLocaleString("vi-VN", options); // Hiển thị ngày giờ cụ thể
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchPosts);
+        document.addEventListener("DOMContentLoaded", loadMessages);
+    </script>
+
+</body>
+
+</html>

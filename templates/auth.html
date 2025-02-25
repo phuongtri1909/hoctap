@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to bottom, #f3f7ff, #ffffff);
+            position: relative;
+        }
+
+        .clouds {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('https://i.imgur.com/6n3NYpR.png') no-repeat center;
+            background-size: cover;
+            opacity: 0.4;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .container img {
+            width: 50px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .toggle {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .toggle a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .message {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        #username {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="clouds"></div>
+
+    <div class="container">
+        <img src="https://via.placeholder.com/50" alt="Logo">
+        <h2 id="form-title">Đăng nhập</h2>
+
+        <input type="text" id="username" placeholder="Tên người dùng">
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Mật khẩu">
+
+        <button onclick="handleAuth()">Đăng nhập</button>
+
+        <p class="message" id="message"></p>
+        <p class="toggle">
+            Chưa có tài khoản? <a onclick="toggleForm()">Đăng ký ngay</a>
+        </p>
+    </div>
+
+    <script>
+        let isLogin = true;
+
+        function toggleForm() {
+            isLogin = !isLogin;
+            document.getElementById("form-title").textContent = isLogin ? "Đăng nhập" : "Đăng ký";
+            document.getElementById("username").style.display = isLogin ? "none" : "block";
+            document.querySelector("button").textContent = isLogin ? "Đăng nhập" : "Đăng ký";
+            document.querySelector(".toggle").innerHTML = isLogin
+                ? 'Chưa có tài khoản? <a onclick="toggleForm()">Đăng ký ngay</a>'
+                : 'Đã có tài khoản? <a onclick="toggleForm()">Đăng nhập</a>';
+        }
+
+        async function handleAuth() {
+            console.log("handleAuth");
+            
+            const username = document.getElementById("username").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const message = document.getElementById("message");
+
+            if (!email || !password || (!isLogin && !username)) {
+                message.textContent = "Vui lòng điền đầy đủ thông tin!";
+                return;
+            }
+
+            const url = isLogin
+                ? "/auth/login"
+                : "/auth/register";
+            const payload = isLogin
+                ? { email, password }
+                : { username, email, password };
+
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (isLogin) {
+                        localStorage.setItem("token", data.token);
+                        localStorage.setItem("username", data.username);
+                        localStorage.setItem("pass", data.password);
+                        localStorage.setItem("role", data.role);
+
+                        window.location.href = data.role === "admin" ? "/admin" : "/home";
+                    } else {
+                        message.style.color = "green";
+                        message.textContent = "Đăng ký thành công! Vui lòng đăng nhập.";
+                        toggleForm();
+                    }
+                } else {
+                    message.textContent = data.message;
+                }
+            } catch (error) {
+                message.textContent = "Lỗi kết nối đến máy chủ!";
+            }
+        }
+    </script>
+
+</body>
+
+</html>

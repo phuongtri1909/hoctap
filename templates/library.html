@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư viện văn mẫu & Đề thi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        #library {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+        }
+        #document-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .document {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+        .document:hover {
+            transform: translateY(-5px);
+        }
+        .document h3 {
+            margin: 0;
+            color: #007bff;
+            font-size: 18px;
+        }
+        .document p {
+            font-size: 14px;
+            color: #666;
+            margin: 8px 0;
+        }
+        .document button {
+            padding: 5px 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .edit-btn {
+            background: #ffc107;
+            color: black;
+        }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Button Styles */
+        #add-document-btn {
+            display: none;
+            margin: 20px auto;
+            padding: 10px 15px;
+            background: #28a745;
+            color: white;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        /* Search Bar */
+        #search-container {
+            margin-bottom: 15px;
+        }
+        #search-box {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #search-btn {
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        /* Dialog Styles */
+        dialog {
+            width: 60%;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+        .close-btn {
+            background: red;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    {% include "base.html" %}
+    <section id="library">
+        <h2>Thư viện văn mẫu & Đề thi</h2>
+
+        <!-- Search -->
+        <!-- <div id="search-container">
+            <input type="text" id="search-box" placeholder="Nhập từ khóa tìm kiếm...">
+            <button id="search-btn" onclick="searchDocuments()">🔍 Tìm kiếm</button>
+        </div> -->
+
+        <!-- Button to add document (only visible for admins) -->
+        <button id="add-document-btn" onclick="openAddDocumentDialog()">➕ Thêm tài liệu</button>
+
+        <div id="document-list">Đang tải dữ liệu...</div>
+    </section>
+
+    <!-- Add/Edit Document Dialog -->
+    <dialog id="add-document-dialog">
+        <h3 id="dialog-title">Thêm tài liệu mới</h3>
+        <input type="hidden" id="doc-id">
+        
+        <label>Tiêu đề:</label>
+        <input type="text" id="doc-title"><br><br>
+
+        <label>Nội dung:</label>
+        <textarea id="doc-content"></textarea><br><br>
+
+        <label>Danh mục:</label>
+        <input type="text" id="doc-category"><br><br>
+
+        <label>Lớp:</label>
+        <input type="text" id="doc-grade"><br><br>
+
+        <label>Tác giả:</label>
+        <input type="text" id="doc-author"><br><br>
+
+        <button onclick="saveDocument()">Lưu</button>
+        <button class="close-btn" onclick="closeAddDocumentDialog()">Hủy</button>
+    </dialog>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            checkAdminAccess();
+            fetchDocuments();
+        });
+
+        function checkAdminAccess() {
+            const role = localStorage.getItem("role");
+            if (role === "admin") {
+                document.getElementById("add-document-btn").style.display = "block";
+            }
+        }
+
+        async function fetchDocuments() {
+            try {
+                const response = await fetch("/library");
+                const data = await response.json();
+                const documentList = document.getElementById("document-list");
+                documentList.innerHTML = "";
+
+                if (data.length === 0) {
+                    documentList.innerHTML = "<p>Không có bài viết nào.</p>";
+                    return;
+                }
+
+                data.forEach(doc => {
+                    const docElement = document.createElement("div");
+                    docElement.className = "document";
+                    docElement.innerHTML = `
+                        <h3>${doc.title}</h3>
+                        <p><strong>Danh mục:</strong> ${doc.category}</p>
+                        <p><strong>Tác giả:</strong> ${doc.author}</p>
+                        <p>${doc.content.substring(0, 100)}...</p>
+                        <button class="edit-btn" onclick="editDocument('${doc._id}', '${doc.title}', '${doc.content}', '${doc.category}', '${doc.grade}', '${doc.author}')">✏️ Chỉnh sửa</button>
+                        <button class="delete-btn" onclick="deleteDocument('${doc._id}')">🗑 Xóa</button>
+                    `;
+                    documentList.appendChild(docElement);
+                });
+            } catch (error) {
+                console.error("Lỗi tải dữ liệu:", error);
+            }
+        }
+        function deleteDocument(id) {
+            if (!confirm("Bạn có chắc chắn muốn xóa tài liệu này?")) return;
+        
+            fetch(`/library/${id}`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchDocuments(); // Refresh the list after deletion
+            })
+            .catch(error => {
+                console.error("Lỗi khi xóa tài liệu:", error);
+                alert("Đã xảy ra lỗi khi xóa tài liệu!");
+            });
+        }
+        
+        function openAddDocumentDialog() {
+            document.getElementById("dialog-title").textContent = "Thêm tài liệu mới";
+            document.getElementById("doc-id").value = "";
+            document.getElementById("doc-title").value = "";
+            document.getElementById("doc-content").value = "";
+            document.getElementById("doc-category").value = "";
+            document.getElementById("doc-grade").value = "";
+            document.getElementById("doc-author").value = "";
+            document.getElementById("add-document-dialog").showModal();
+        }
+
+        function editDocument(id, title, content, category, grade, author) {
+            document.getElementById("dialog-title").textContent = "Chỉnh sửa tài liệu";
+            document.getElementById("doc-id").value = id;
+            document.getElementById("doc-title").value = title;
+            document.getElementById("doc-content").value = content;
+            document.getElementById("doc-category").value = category;
+            document.getElementById("doc-grade").value = grade;
+            document.getElementById("doc-author").value = author;
+            document.getElementById("add-document-dialog").showModal();
+        }
+
+        function closeAddDocumentDialog() {
+            document.getElementById("add-document-dialog").close();
+        }
+
+        function saveDocument() {
+            const data = {
+                title: document.getElementById("doc-title").value,
+                content: document.getElementById("doc-content").value,
+                category: document.getElementById("doc-category").value,
+                grade: document.getElementById("doc-grade").value,
+                author: document.getElementById("doc-author").value
+            };
+
+            fetch("/library", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
+                .then(() => { closeAddDocumentDialog(); fetchDocuments(); });
+        }
+    </script>
+
+</body>
+</html>
